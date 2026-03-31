@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Invoice from "./Invoice"; // Adjust path if needed
@@ -17,17 +19,27 @@ import {
   Filter,
   Search,
   User,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import useMyBookings from "../hooks/useMyBooking";
 
+const fakeQrData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0AQMAAAC369T4AAAABlBMVEX///8AAABVwtN+AAAAAXRSTlMAQObYZgAAAFhJREFUKM99wTEBAAAAwqD1T20KP6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAL8BD4AAAXJy+3gAAAAASUVORK5CYII=";
+
 const MyBooking = () => {
+  const navigate = useNavigate();
   const { bookings, loading, error } = useMyBookings();
+  const [myBookings, setMyBookings] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [invoiceBooking, setInvoiceBooking] = useState(null);
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [isPayingInModal, setIsPayingInModal] = useState(false);
+  const [paymentSuccessInModal, setPaymentSuccessInModal] = useState(false);
+  const [editFormData, setEditFormData] = useState({});
   const invoiceRef = useRef();
 
-  
+
   useEffect(() => {
     const generatePdf = async (element) => {
       if (!element) return;
@@ -85,6 +97,62 @@ const MyBooking = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceBooking]);
 
+  // Keep local state in sync with the fresh bookings from hook
+  useEffect(() => {
+    setMyBookings(bookings || []);
+  }, [bookings]);
+
+  const saveLocalBooking = (updatedBooking) => {
+    const localBookings = JSON.parse(localStorage.getItem("localBookings") || "[]");
+    const existingIdx = localBookings.findIndex((b) => b._id === updatedBooking._id);
+    if (existingIdx !== -1) {
+      localBookings[existingIdx] = { ...localBookings[existingIdx], ...updatedBooking };
+    } else {
+      localBookings.push(updatedBooking);
+    }
+    localStorage.setItem("localBookings", JSON.stringify(localBookings));
+  };
+
+  const handleSaveBookingEdit = (updatedData) => {
+    setMyBookings((prev) =>
+      prev.map((booking) =>
+        booking._id === updatedData._id ? { ...booking, ...updatedData } : booking,
+      ),
+    );
+    saveLocalBooking(updatedData);
+    setEditingBooking(null);
+    setEditFormData({});
+    setIsPayingInModal(false);
+    setPaymentSuccessInModal(false);
+  };
+
+  const handlePaymentInModal = () => {
+    if (isPayingInModal || paymentSuccessInModal) return;
+
+    setIsPayingInModal(true);
+    toast.info("Processing payment...");
+
+    setTimeout(() => {
+      const updatedBooking = {
+        ...editingBooking,
+        paymentStatus: "paid",
+        status: "confirmed",
+        paymentDate: new Date().toISOString(),
+      };
+
+      saveLocalBooking(updatedBooking);
+      setEditingBooking(updatedBooking);
+      setPaymentSuccessInModal(true);
+      setIsPayingInModal(false);
+      toast.success("Payment Successful!");
+
+      // Auto close modal after showing success message
+      setTimeout(() => {
+        handleSaveBookingEdit(updatedBooking);
+      }, 1500);
+    }, 2500);
+  };
+
   // Trigger download by setting invoiceBooking; useEffect will pick it up
   const handleDownloadInvoice = (booking) => {
     setInvoiceBooking(booking);
@@ -125,13 +193,17 @@ const MyBooking = () => {
   };
 
   const filteredBookings =
-    bookings?.filter((booking) => {
+    myBookings?.filter((booking) => {
+      const computedStatus =
+        booking.paymentStatus === "paid"
+          ? "confirmed"
+          : booking.status?.toLowerCase() || "pending";
       const matchesSearch =
         booking.tourTitle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         booking.name?.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "all" ||
-        booking.status?.toLowerCase() === statusFilter;
+        computedStatus === statusFilter;
       return matchesSearch && matchesStatus;
     }) || [];
 
@@ -284,7 +356,11 @@ const MyBooking = () => {
           ) : (
             <div className="divide-y divide-gray-200">
               {filteredBookings.map((booking, index) => {
-                const statusInfo = getStatusInfo(booking.status);
+                const computedStatus =
+                  booking.paymentStatus === "paid"
+                    ? "confirmed"
+                    : booking.status?.toLowerCase() || "pending";
+                const statusInfo = getStatusInfo(computedStatus);
                 const StatusIcon = statusInfo.icon;
 
                 return (
@@ -400,13 +476,28 @@ const MyBooking = () => {
                             </div>
                           </div>
                         )}
-                      </div>
+                        <div className="mt-3 flex items-center gap-2 text-sm">
+                          <span className="font-semibold text-gray-600">Payment:</span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${booking.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                            {booking.paymentStatus ?? "pending"}
+                          </span>
+                        </div>                      </div>
 
                       {/* Right Section - Actions */}
                       <div className="flex flex-col space-y-2 lg:ml-6">
-                        <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => navigate("/invoice", { state: { booking } })}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+                        >
                           <Eye size={16} />
-                          <span>View Details</span>
+                          <span>View Invoice</span>
+                        </button>
+
+                        <button
+                          onClick={() => setEditingBooking(booking)}
+                          className="bg-yellow-50 hover:bg-yellow-100 border-2 border-yellow-200 hover:border-yellow-300 text-yellow-700 font-semibold py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                        >
+                          <span>Edit Booking</span>
                         </button>
 
                         <button
@@ -424,6 +515,201 @@ const MyBooking = () => {
             </div>
           )}
         </div>
+
+        {/* Edit Booking Modal */}
+        {editingBooking && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">
+                  {paymentSuccessInModal ? "✓ Payment Complete" : editingBooking.paymentStatus === "paid" ? "Edit Booking (Already Paid)" : "Edit Booking"}
+                </h3>
+                <button
+                  onClick={() => {
+                    setEditingBooking(null);
+                    setEditFormData({});
+                    setIsPayingInModal(false);
+                    setPaymentSuccessInModal(false);
+                  }}
+                  className="text-gray-500 hover:text-gray-800"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Show Success Message */}
+              {paymentSuccessInModal && (
+                <div className="mb-6 p-4 bg-green-50 border-2 border-green-300 rounded-xl flex items-center gap-3">
+                  <CheckCircle2 size={24} className="text-green-600" />
+                  <div>
+                    <p className="font-semibold text-green-800">Payment Successful!</p>
+                    <p className="text-sm text-green-700">Status updated to Confirmed</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Side - Edit Form */}
+                <div>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const updatedBooking = {
+                        ...editingBooking,
+                        travelers: Number(e.target.travelers.value),
+                        travelDate: e.target.travelDate.value,
+                        specialRequests: e.target.specialRequests.value,
+                        paymentStatus: editingBooking.paymentStatus || "pending",
+                        status:
+                          (editingBooking.paymentStatus === "paid" ? "confirmed" : editingBooking.status?.toLowerCase()) || "pending",
+                      };
+                      handleSaveBookingEdit(updatedBooking);
+                    }}
+                    className="space-y-4"
+                  >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Tour Name</label>
+                      <input
+                        value={editingBooking.tourTitle}
+                        disabled
+                        className="w-full rounded-lg border px-4 py-2 bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Travel Date</label>
+                      <input
+                        name="travelDate"
+                        type="date"
+                        defaultValue={editingBooking.travelDate?.split("T")[0] || ""}
+                        className="w-full rounded-lg border px-4 py-2"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Travelers</label>
+                      <input
+                        name="travelers"
+                        type="number"
+                        min="1"
+                        defaultValue={editingBooking.travelers || 1}
+                        className="w-full rounded-lg border px-4 py-2"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Special Requests</label>
+                      <textarea
+                        name="specialRequests"
+                        defaultValue={editingBooking.specialRequests || ""}
+                        className="w-full rounded-lg border px-4 py-2 h-20"
+                        placeholder="Ask for seat preferences, meals, etc."
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingBooking(null);
+                          setEditFormData({});
+                          setIsPayingInModal(false);
+                          setPaymentSuccessInModal(false);
+                        }}
+                        className="px-4 py-2 text-gray-700 border rounded-lg hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={paymentSuccessInModal}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        Save Changes
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Right Side - Payment Section (if not paid) */}
+                {editingBooking.paymentStatus !== "paid" && (
+                  <div className="border-l-2 border-gray-200 pl-6">
+                    <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 h-full">
+                      <h4 className="text-lg font-bold text-gray-800 mb-4">Payment</h4>
+
+                      {/* Payment Details */}
+                      <div className="space-y-3 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Total Amount</p>
+                          <p className="text-2xl font-bold text-green-600">₹{editingBooking.totalPrice?.toLocaleString() || 0}</p>
+                        </div>
+                        <div className="pt-3 border-t border-gray-200">
+                          <p className="text-sm text-gray-600 mb-2">Scan to Pay</p>
+                          <img
+                            src={fakeQrData}
+                            alt="QR code"
+                            className="w-32 h-32 rounded-lg border-2 border-gray-300 p-2 bg-white mx-auto"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Pay Now Button */}
+                      <button
+                        onClick={handlePaymentInModal}
+                        disabled={isPayingInModal || paymentSuccessInModal}
+                        className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${paymentSuccessInModal
+                            ? "bg-green-500 text-white cursor-default"
+                            : isPayingInModal
+                              ? "bg-blue-300 text-white cursor-wait"
+                              : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
+                          }`}
+                      >
+                        {isPayingInModal ? (
+                          <>
+                            Processing <Loader2 className="animate-spin" size={18} />
+                          </>
+                        ) : paymentSuccessInModal ? (
+                          <>
+                            <CheckCircle2 size={18} /> Paid
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard size={18} /> Pay Now
+                          </>
+                        )}
+                      </button>
+
+                      {paymentSuccessInModal && (
+                        <p className="text-center text-sm text-green-700 font-semibold mt-3">
+                          Payment successful! Closing...
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show Status when Already Paid */}
+                {editingBooking.paymentStatus === "paid" && (
+                  <div className="border-l-2 border-gray-200 pl-6">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 h-full flex flex-col items-center justify-center">
+                      <CheckCircle2 size={48} className="text-green-600 mb-2" />
+                      <p className="text-lg font-bold text-green-800">Payment Completed</p>
+                      <p className="text-sm text-green-700 text-center mt-2">
+                        This booking has been paid and confirmed.
+                      </p>
+                      <div className="mt-4 p-3 bg-white rounded-lg w-full text-center">
+                        <p className="text-xs text-gray-600">Amount Paid</p>
+                        <p className="text-xl font-bold text-green-600">₹{editingBooking.totalPrice?.toLocaleString() || 0}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Summary Card */}
         {bookings && bookings.length > 0 && (

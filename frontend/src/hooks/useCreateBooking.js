@@ -5,7 +5,7 @@ import { AppContext } from "../context/AppContext";
 const useBooking = (tour, navigate) => {
   const { user } = useContext(AppContext);
 
-  const { title = "", price = 0 } = tour || {};
+  const { title = "", price = 0, availableDates = [] } = tour || {};
 
   const [formData, setFormData] = useState({
     name: "",
@@ -13,6 +13,7 @@ const useBooking = (tour, navigate) => {
     phone: "",
     travelers: 1,
     specialRequests: "",
+    travelDate: availableDates[0] || "",
   });
 
   const [totalPrice, setTotalPrice] = useState(price);
@@ -34,6 +35,15 @@ const useBooking = (tour, navigate) => {
     setTotalPrice(newTotal);
   }, [formData.travelers, price]);
 
+  useEffect(() => {
+    if (tour?.availableDates && tour.availableDates.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        travelDate: prev.travelDate || tour.availableDates[0],
+      }));
+    }
+  }, [tour]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -42,56 +52,54 @@ const useBooking = (tour, navigate) => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { name, email, phone } = formData;
+    const { name, email, phone, travelDate, travelers } = formData;
 
-    if (!name || !email || !phone) {
+    if (!name || !email || !phone || !travelDate) {
       toast.error("Please fill out all required fields.");
       setIsSubmitting(false);
       return;
     }
 
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/bookings`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            tourId: tour.id,
-            tourTitle: tour.title,
-            totalPrice,
-          }),
-        }
-      );
+    const bookingDraft = {
+      _id: `local_${Date.now()}`,
+      tourId: tour.id,
+      tourTitle: tour.title,
+      tourPrice: price,
+      name,
+      email,
+      phone,
+      travelers: Number(travelers),
+      specialRequests: formData.specialRequests,
+      travelDate,
+      totalPrice,
+      status: "confirmed",
+      paymentStatus: "pending",
+      createdAt: new Date().toISOString(),
+      bookingDate: new Date().toISOString(),
+    };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to create booking");
-      }
+    const localBookings = JSON.parse(
+      localStorage.getItem("localBookings") || "[]",
+    );
+    localStorage.setItem(
+      "localBookings",
+      JSON.stringify([bookingDraft, ...localBookings]),
+    );
 
-      const data = await response.json();
-      toast.success("Booking successful!");
-      setFormData((prev) => ({
-        ...prev,
-        travelers: 1,
-        specialRequests: "",
-      }));
-      // navigate("/invoice", { state: { booking: data.booking } });
-    } catch (error) {
-      console.error("Booking error:", error);
-      toast.error("Error: " + error.message);
-    } finally {
+    toast.info("Booking pending payment. Redirecting to payment...");
+
+    setTimeout(() => {
       setIsSubmitting(false);
-    }
+      navigate("/payment", {
+        state: {
+          booking: bookingDraft,
+        },
+      });
+    }, 500);
   };
 
   return {

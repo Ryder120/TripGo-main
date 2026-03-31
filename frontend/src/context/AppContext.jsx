@@ -8,6 +8,9 @@ const AppContextProvider = (props) => {
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token"));
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -17,7 +20,26 @@ const AppContextProvider = (props) => {
       setToken(token);
       setUser(JSON.parse(user));
     }
+
+    if (localStorage.getItem("theme") === "dark") {
+      document.documentElement.classList.add("dark");
+      setDarkMode(true);
+    } else {
+      document.documentElement.classList.remove("dark");
+      setDarkMode(false);
+    }
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = !darkMode;
+    setDarkMode(newTheme);
+    localStorage.setItem("theme", newTheme ? "dark" : "light");
+    if (newTheme) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -34,6 +56,8 @@ const AppContextProvider = (props) => {
     setToken,
     backendUrl,
     logout,
+    darkMode,
+    toggleTheme,
   };
 
   return (

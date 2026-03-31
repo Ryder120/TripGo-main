@@ -58,28 +58,38 @@ const Invoice = forwardRef(({ booking: propBooking }, ref) => {
       className="max-w-4xl mx-auto p-6 bg-white/40 rounded-lg shadow-lg mt-[150px] sm:mt-24 mb-[220px] sm:mb-0"
     >
       <h2 className="text-3xl font-bold mb-6">
-        Booking <span className="text-blue-500">Invoice</span>{" "}
+        Booking <span className="text-blue-500">Invoice</span>
       </h2>
-      <div>
-        <h3 className="text-2xl font-semibold mb-5">Customer Details</h3>
-        <p>
-          <strong>Name:</strong> {booking.name}
-        </p>
-        <p>
-          <strong>Email:</strong> {booking.email}
-        </p>
-        <p>
-          <strong>Phone:</strong> {booking.phone}
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+        <div>
+          <p className="text-gray-500">Booking ID</p>
+          <p className="font-semibold">#{booking._id?.slice(-8).toUpperCase()}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Payment Status</p>
+          <p className="font-semibold text-green-600">{booking.paymentStatus ?? "pending"}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Tour Name</p>
+          <p className="font-semibold">{booking.tourTitle}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">User Name</p>
+          <p className="font-semibold">{booking.name}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Travel Date</p>
+          <p className="font-semibold">{new Date(booking.travelDate).toLocaleDateString()}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Booking Date</p>
+          <p className="font-semibold">{new Date(booking.bookingDate || booking.createdAt).toLocaleDateString()}</p>
+        </div>
       </div>
-      <div className="mt-6">
-        <h3 className="text-2xl font-semibold mb-5">Package Details</h3>
+      <div className="border-t border-gray-200 pt-4">
+        <h3 className="text-2xl font-semibold mb-4">Booking Summary</h3>
         <p>
-          <strong>Tour:</strong> {booking.tourTitle}
-        </p>
-        <p>
-          <strong>Number of Travelers: </strong>
-          {booking.travelers}
+          <strong>Number of People:</strong> {booking.travelers}
         </p>
         <p>
           <strong>Total Price:</strong> ₹{booking.totalPrice}

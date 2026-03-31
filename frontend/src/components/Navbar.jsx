@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, Moon, Sun } from "lucide-react";
 import { AppContext } from "../context/AppContext";
 import logo from "../assets/logo.png";
 
@@ -10,13 +10,13 @@ const assets = {
 };
 
 const Navbar = () => {
-  const { user, logout } = useContext(AppContext);
+  const { user, logout, darkMode, toggleTheme } = useContext(AppContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
   const toggleMenu = (e) => {
-    e.stopPropagation(); // Prevent click from bubbling to document
+    e.stopPropagation();
     setMenuOpen((prev) => !prev);
   };
 
@@ -58,6 +58,7 @@ const Navbar = () => {
     { to: "/about", label: "About" },
     { to: "/tours", label: "Tours" },
     ...(user ? [{ to: "/my-booking", label: "My Bookings" }] : []),
+    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -65,12 +66,11 @@ const Navbar = () => {
   return (
     <>
       {/* Navbar */}
-      <nav
-        className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 ${
-          scrolled
+      <div
+        className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 ${scrolled
             ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
             : "bg-white/90 backdrop-blur-sm"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
@@ -95,11 +95,10 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive(link.to)
-                      ? "bg-blue-50 text-blue-600 shadow-sm"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive(link.to)
+                    ? "bg-blue-50 text-blue-600 shadow-sm"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                    }`}
                 >
                   {link.label}
                 </Link>
@@ -108,8 +107,25 @@ const Navbar = () => {
 
             {/* Desktop User Section */}
             <div className="hidden md:flex items-center space-x-4">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {darkMode ? (
+                  <Sun className="w-5 h-5 text-yellow-400" />
+                ) : (
+                  <Moon className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
               {user ? (
                 <div className="flex items-center space-x-3">
+                  <Link
+                    to="/profile"
+                    className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                  >
+                    Profile
+                  </Link>
                   {/* User Profile */}
                   <div className="relative group">
                     <div className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
@@ -124,14 +140,14 @@ const Navbar = () => {
                     </div>
 
                     {/* Dropdown */}
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 dark:bg-slate-800 dark:border-slate-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                       <div className="py-2">
-                        <div className="px-4 py-2 text-sm text-gray-500 border-b border-gray-100">
+                        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-200 border-b border-gray-100 dark:border-slate-700">
                           Signed in as <strong>{user.name}</strong>
                         </div>
                         <button
                           onClick={logout}
-                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          className="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                         >
                           <LogOut className="w-4 h-4 mr-2" />
                           Sign out
@@ -172,67 +188,68 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-      </nav>
+      </div>
 
       {/* Mobile Menu Overlay */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm">
-          <div className="fixed top-16 sm:top-20 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container">
-            <div className="px-4 py-6 space-y-4">
-              {/* Mobile Navigation Links */}
-              <div className="space-y-2">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    onClick={() => setMenuOpen(false)}
-                    className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                      isActive(link.to)
+      {
+        menuOpen && (
+          <div className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm">
+            <div className="fixed top-16 sm:top-20 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container">
+              <div className="px-4 py-6 space-y-4">
+                {/* Mobile Navigation Links */}
+                <div className="space-y-2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMenuOpen(false)}
+                      className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive(link.to)
                         ? "bg-blue-50 text-blue-600"
                         : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
+                        }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
 
-              {/* Mobile User Section */}
-              <div className="pt-4 border-t border-gray-200">
-                {user ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center px-4 py-2">
-                      <User className="w-5 h-5 text-gray-400 mr-3" />
-                      <span className="text-sm text-gray-600">
-                        Signed in as <strong>{user.name}</strong>
-                      </span>
+                {/* Mobile User Section */}
+                <div className="pt-4 border-t border-gray-200">
+                  {user ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center px-4 py-2">
+                        <User className="w-5 h-5 text-gray-400 mr-3" />
+                        <span className="text-sm text-gray-600">
+                          Signed in as <strong>{user.name}</strong>
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          logout();
+                          setMenuOpen(false);
+                        }}
+                        className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <LogOut className="w-5 h-5 mr-3" />
+                        Sign out
+                      </button>
                     </div>
-                    <button
-                      onClick={() => {
-                        logout();
-                        setMenuOpen(false);
-                      }}
-                      className="w-full flex items-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <LogOut className="w-5 h-5 mr-3" />
-                      Sign out
-                    </button>
-                  </div>
-                ) : (
-                  <Link to="/login">
-                    <button
-                      onClick={() => setMenuOpen(false)}
-                      className="w-full px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg hover:from-sky-600 hover:to-blue-700 transition-all duration-200"
-                    >
-                      Login
-                    </button>
-                  </Link>
-                )}
+                  ) : (
+                    <Link to="/login">
+                      <button
+                        onClick={() => setMenuOpen(false)}
+                        className="w-full px-4 py-3 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-lg font-medium shadow-md hover:shadow-lg hover:from-sky-600 hover:to-blue-700 transition-all duration-200"
+                      >
+                        Login
+                      </button>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Spacer for fixed navbar */}
       <div className="h-16 sm:h-20" />

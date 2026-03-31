@@ -18,14 +18,29 @@ const useMyBookings = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
-        setBookings(res.data.bookings || []);
+        const apiBookings = res.data.bookings || [];
+        const localBookings = JSON.parse(
+          localStorage.getItem("localBookings") || "[]",
+        );
+        const mergedBookings = [
+          ...apiBookings,
+          ...localBookings.filter(
+            (local) => !apiBookings.some((api) => api._id === local._id),
+          ),
+        ];
+
+        setBookings(mergedBookings);
         setError("");
       } catch (err) {
         console.error("Error fetching bookings:", err);
-        setError("Failed to fetch bookings.");
+        const localBookings = JSON.parse(
+          localStorage.getItem("localBookings") || "[]",
+        );
+        setBookings(localBookings);
+        setError("Failed to fetch bookings. Showing local data.");
       } finally {
         setLoading(false);
       }

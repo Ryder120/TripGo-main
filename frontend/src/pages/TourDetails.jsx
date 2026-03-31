@@ -1,14 +1,21 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Calendar, DollarSign, MapPin, Users, Star } from "lucide-react";
 import tourData from "../assets/data/tour.js";
 import { AppContext } from "../context/AppContext";
+import ReviewCard from "../components/ReviewCard";
 
 const TourDetails = () => {
   const { user } = useContext(AppContext);
   const navigate = useNavigate();
   const { id } = useParams();
   const tour = tourData.find((tour) => tour.id === id);
+
+  const [selectedDate, setSelectedDate] = useState(tour?.availableDates?.[0] || "");
+  const [selectedImage, setSelectedImage] = useState(tour?.photo || "");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newReview, setNewReview] = useState({ name: "", rating: 5, comment: "" });
+  const [reviews, setReviews] = useState(tour?.reviews || []);
 
   if (!tour) return <div className="text-center py-12">Tour not found</div>;
 
@@ -17,19 +24,14 @@ const TourDetails = () => {
     title,
     desc,
     price,
-    reviews,
     city,
     distance,
     maxGroupSize,
     availableDates,
     avgRating,
+    duration,
+    gallery = [],
   } = tour;
-
-  const [selectedDate, setSelectedDate] = useState(availableDates[0]);
-
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
-  };
 
   const renderStars = (rating) => {
     const totalStars = 5;
@@ -37,64 +39,94 @@ const TourDetails = () => {
       <Star
         key={i}
         size={18}
-        className={`${
-          i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-        }`}
+        className={i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
       />
     ));
   };
 
+  const handleAddReview = (e) => {
+    e.preventDefault();
+    if (!newReview.name || !newReview.comment) return;
+    const reviewToAdd = {
+      ...newReview,
+      createdAt: new Date().toISOString(),
+    };
+    setReviews((prev) => [reviewToAdd, ...prev]);
+    setNewReview({ name: "", rating: 5, comment: "" });
+  };
+
+  const computedAvgRating = useMemo(() => {
+    if (reviews.length === 0) return 0;
+    return (reviews.reduce((sum, item) => sum + Number(item.rating), 0) / reviews.length).toFixed(1);
+  }, [reviews]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-10 px-4 sm:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:bg-slate-900 dark:text-white py-10 px-4 sm:px-8">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Hero Image */}
         <div className="relative h-96 md:h-[500px] overflow-hidden rounded-3xl shadow-lg">
           <img
-            src={photo}
+            src={selectedImage || photo}
             alt={title}
             className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute bottom-8 left-8 text-white">
             <h1 className="text-3xl md:text-5xl font-bold mb-2">{title}</h1>
-            <div className="flex items-center space-x-4 text-sm md:text-lg">
-              <div className="flex items-center space-x-1">
-                <MapPin size={18} />
-                <span>{city}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Calendar size={18} />
-                <span>{availableDates.length} Dates</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <Users size={18} />
-                <span>Max {maxGroupSize}</span>
-              </div>
+            <div className="flex flex-wrap items-center gap-4 text-sm md:text-lg">
+              <span className="inline-flex items-center gap-1 bg-blue-600/80 px-3 py-1 rounded-full">{city}</span>
+              <span className="inline-flex items-center gap-1 bg-indigo-600/80 px-3 py-1 rounded-full">{duration} days</span>
+              <span className="inline-flex items-center gap-1 bg-purple-600/80 px-3 py-1 rounded-full">{maxGroupSize} max people</span>
             </div>
           </div>
         </div>
 
+        {/* Gallery */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[photo, ...gallery].slice(0, 6).map((img, idx) => (
+            <button
+              key={`${img}-${idx}`}
+              onClick={() => {
+                setSelectedImage(img);
+                setIsModalOpen(true);
+              }}
+              className="h-24 overflow-hidden rounded-lg border border-gray-200 dark:border-slate-700"
+            >
+              <img src={img} alt={`gallery-${idx}`} className="w-full h-full object-cover transform hover:scale-110 transition" />
+            </button>
+          ))}
+        </div>
+
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+            <div className="relative max-w-4xl w-full">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-2 right-2 bg-gray-100 dark:bg-slate-800 rounded-full p-2 text-gray-700 dark:text-gray-200"
+              >
+                Close
+              </button>
+              <img src={selectedImage || photo} alt="preview" className="w-full rounded-xl object-contain" />
+            </div>
+          </div>
+        )}
+
         {/* Overview Section */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid gap-8 lg:grid-cols-2">
           {/* Tour Info */}
           <div className="space-y-6">
-            <div className="text-xl text-gray-800 leading-relaxed">{desc}</div>
+            <div className="text-lg leading-relaxed text-gray-900 dark:text-gray-100">{desc}</div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {/* Price */}
-              <div className="bg-white/80 p-5 rounded-xl shadow border">
-                <div className="flex items-center space-x-2 text-gray-700 mb-2">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-soft border border-gray-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 mb-2">
                   <DollarSign size={20} />
                   <span className="font-semibold">Price</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600">
-                  ₹{price.toLocaleString()}
-                </p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-300">${price.toLocaleString()}</p>
               </div>
-
-              {/* Distance */}
-              <div className="bg-white/80 p-5 rounded-xl shadow border">
-                <div className="flex items-center space-x-2 text-gray-700 mb-2">
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-soft border border-gray-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 text-gray-700 dark:text-gray-200 mb-2">
                   <MapPin size={20} />
                   <span className="font-semibold">Distance</span>
                 </div>
@@ -102,16 +134,11 @@ const TourDetails = () => {
               </div>
             </div>
 
-            {/* Date Selector */}
-            <div>
-              <label className="block text-gray-800 font-semibold mb-2">
-                <Calendar className="inline mr-2 text-blue-600" size={18} />
-                Choose Date
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <select
                 value={selectedDate}
-                onChange={handleDateChange}
-                className="w-full p-3 rounded-xl border bg-white/70 shadow text-gray-700 focus:ring-2 focus:ring-blue-400 transition"
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full p-3 rounded-xl border dark:bg-slate-700 focus:ring-2 focus:ring-blue-400"
               >
                 {availableDates.map((date, idx) => (
                   <option key={idx} value={date}>
@@ -124,9 +151,13 @@ const TourDetails = () => {
                   </option>
                 ))}
               </select>
+              <div className="p-3 rounded-xl border bg-white/80 dark:bg-slate-800">
+                <div className="text-sm text-gray-500 dark:text-gray-400">Rating</div>
+                <div className="flex gap-1 mt-1">{renderStars(Math.round(computedAvgRating))}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">Average {computedAvgRating}</div>
+              </div>
             </div>
 
-            {/* Booking Button */}
             <button
               onClick={() => {
                 scrollTo(0, 0);
@@ -136,39 +167,50 @@ const TourDetails = () => {
                   navigate("/booking", { state: { tour } });
                 }
               }}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold shadow hover:shadow-lg hover:scale-105 transition-all duration-300"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-semibold shadow hover:shadow-lg hover:scale-105 transition-all duration-300"
             >
-              🎉 Book This Tour
+              Book This Tour
             </button>
           </div>
 
-          {/* Reviews */}
-          <div className="bg-white/90 rounded-xl p-6 shadow space-y-6 border">
-            <div>
-              <h3 className="text-2xl font-semibold text-gray-800 mb-2">
-                Customer Reviews
-              </h3>
-              <div className="flex items-center space-x-2">
-                <div className="flex">{renderStars(Math.round(avgRating))}</div>
-                <span className="text-gray-600">{avgRating} stars</span>
-              </div>
-              <p className="text-gray-600 mt-1">{reviews.length} reviews</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-soft border border-gray-200 dark:border-slate-700">
+            <div className="mb-4">
+              <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">Customer Reviews</h3>
+              <p className="text-gray-500 dark:text-gray-300">{reviews.length} reviews • avg {computedAvgRating}</p>
             </div>
 
-            <div className="space-y-4">
-              {reviews.map((review, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 bg-gray-50 rounded-lg border shadow-sm"
+            <form onSubmit={handleAddReview} className="space-y-3 mb-4">
+              <input
+                type="text"
+                placeholder="Your name"
+                value={newReview.name}
+                onChange={(e) => setNewReview((prev) => ({ ...prev, name: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 dark:bg-slate-700"
+              />
+              <textarea
+                rows={3}
+                placeholder="Write your review"
+                value={newReview.comment}
+                onChange={(e) => setNewReview((prev) => ({ ...prev, comment: e.target.value }))}
+                className="w-full border rounded-lg px-3 py-2 dark:bg-slate-700"
+              />
+              <div className="flex items-center justify-between">
+                <select
+                  value={newReview.rating}
+                  onChange={(e) => setNewReview((prev) => ({ ...prev, rating: Number(e.target.value) }))}
+                  className="border rounded-lg px-3 py-2 dark:bg-slate-700"
                 >
-                  <div className="font-semibold text-gray-800 mb-1">
-                    {review.name}
-                  </div>
-                  <div className="flex mb-2">
-                    {renderStars(Math.round(review.rating))}
-                  </div>
-                  <p className="text-gray-700">{review.comment}</p>
-                </div>
+                  {[5, 4, 3, 2, 1].map((val) => (
+                    <option key={val} value={val}>{val} Stars</option>
+                  ))}
+                </select>
+                <button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded-lg">Submit Review</button>
+              </div>
+            </form>
+
+            <div className="space-y-3">
+              {reviews.map((review, index) => (
+                <ReviewCard key={index} review={review} />
               ))}
             </div>
           </div>

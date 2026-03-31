@@ -1,10 +1,11 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import useBooking from "../hooks/useCreateBooking";
 
 const Booking = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const tour = location.state?.tour;
 
   // Early block render if data missing
@@ -13,7 +14,7 @@ const Booking = () => {
   const { title = "" } = tour;
 
   const { formData, totalPrice, isSubmitting, handleChange, handleSubmit } =
-    useBooking(tour);
+    useBooking(tour, navigate);
 
   // Animation variants
   const containerVariants = {
@@ -164,6 +165,30 @@ const Booking = () => {
 
                 <motion.div variants={formFieldVariants} className="space-y-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Travel Date *
+                  </label>
+                  <select
+                    name="travelDate"
+                    value={formData.travelDate}
+                    onChange={handleChange}
+                    className="w-full p-4 border-2 border-gray-200 rounded-xl bg-white/50 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                    required
+                  >
+                    {(tour.availableDates || []).map((date, idx) => (
+                      <option key={idx} value={date}>
+                        {new Date(date).toLocaleDateString("en-US", {
+                          weekday: "long",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </option>
+                    ))}
+                  </select>
+                </motion.div>
+
+                <motion.div variants={formFieldVariants} className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Special Requests
                     <span className="text-gray-500 font-normal ml-1">
                       (Optional)
@@ -182,11 +207,10 @@ const Booking = () => {
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-300 transform ${
-                    isSubmitting
+                  className={`w-full py-4 px-6 rounded-xl font-semibold text-white text-lg transition-all duration-300 transform ${isSubmitting
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:scale-105 shadow-lg hover:shadow-xl"
-                  }`}
+                    }`}
                 >
                   {isSubmitting ? "Booking..." : "Confirm Booking"}
                 </motion.button>
