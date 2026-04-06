@@ -7,7 +7,7 @@ import TourDetails from "./pages/TourDetails";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
-import AdminHome from "./pages/AdminHome";
+import AdminDashboard from "./pages/AdminDashboard";
 import ManageTours from "./pages/ManageTours";
 import ManageBookings from "./pages/ManageBookings";
 import ManageUsers from "./pages/ManageUsers";
@@ -38,7 +38,7 @@ const App = () => {
           <Route path="/invoice" element={<Invoice />} />
           <Route path="/my-booking" element={<MyBooking />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/admin" element={<AdminHome />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/tours" element={<ManageTours />} />
           <Route path="/admin/bookings" element={<ManageBookings />} />
           <Route path="/admin/users" element={<ManageUsers />} />        </Routes>

@@ -1,5 +1,25 @@
 import mongoose from "mongoose";
 
+const reviewSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5,
+  },
+  comment: {
+    type: String,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const bookingSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -39,11 +59,24 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     min: 0,
   },
+  travelDate: {
+    type: Date,
+  },
+  bookingDate: {
+    type: Date,
+    default: Date.now,
+  },
   status: {
     type: String,
-    enum: ["pending", "confirmed"],
+    enum: ["pending", "confirmed", "cancelled"],
     default: "pending",
   },
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid"],
+    default: "pending",
+  },
+  reviews: [reviewSchema],
   createdAt: {
     type: Date,
     default: Date.now,

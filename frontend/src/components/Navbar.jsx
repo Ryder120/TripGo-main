@@ -54,12 +54,19 @@ const Navbar = () => {
   }, [menuOpen]);
 
   const navLinks = [
-    { to: "/", label: "Home" },
-    { to: "/about", label: "About" },
-    { to: "/tours", label: "Tours" },
-    ...(user ? [{ to: "/my-booking", label: "My Bookings" }] : []),
-    ...(user?.role === "admin" ? [{ to: "/admin", label: "Admin" }] : []),
-  ];
+  { to: "/", label: "Home" },
+  { to: "/about", label: "About" },
+  { to: "/tours", label: "Tours" },
+  
+
+  // Logged in user links
+  ...(user ? [{ to: "/my-booking", label: "My Bookings" }] : []),
+
+  // Admin only link
+  ...(user && user.role === "admin"
+    ? [{ to: "/admin/dashboard", label: "Admin Panel" }]
+    : []),
+];
 
   const isActive = (path) => location.pathname === path;
 
