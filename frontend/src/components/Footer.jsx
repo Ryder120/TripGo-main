@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <footer className="flex items-center justify-between gap-4 py-3 mt-auto">
+    <footer className="flex items-center justify-between gap-4 py-3 mt-auto text-gray-700 dark:text-gray-300">
       <Link
         to="/"
         className="flex-shrink-0 transition-transform hover:scale-105 duration-200"
@@ -20,7 +20,7 @@ const Footer = () => {
           </span>
         </div>
       </Link>
-      <p className="flex-1 border-l border-gray-400 pl-4 text-sm text-gray-500 max-sm:hidden">
+      <p className="flex-1 border-l border-gray-400 pl-4 text-sm text-gray-500 dark:text-gray-300 max-sm:hidden">
         &copy; 2025 TripGo. All Rights Reserved. | Powered by Innovation.
       </p>
       <div className="flex gap-2.5">

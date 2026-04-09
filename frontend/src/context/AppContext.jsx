@@ -8,7 +8,7 @@ const AppContextProvider = (props) => {
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL ||
     import.meta.env.VITE_API_URL ||
-    "http://localhost:8000";
+    "http://localhost:4000";
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [darkMode, setDarkMode] = useState(

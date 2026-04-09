@@ -3,34 +3,38 @@ import bookingModel from "../models/bookingModel.js";
 /*
  * Create a new booking
  */
-export const createBooking = async (req, res) => {
+const createBooking = async (req, res) => {
   try {
+    console.log("BODY RECEIVED:", req.body); // 🔥 debug
+
     const {
+      userId,
       name,
       email,
       phone,
       travelers,
-      specialRequests,
       tourId,
       tourTitle,
       totalPrice,
       travelDate,
+      specialRequests,
     } = req.body;
 
-    const userId = req.userId;
-
+    // ✅ simple validation
     if (
+      !userId ||
       !name ||
       !email ||
       !phone ||
+      !travelers ||
       !tourId ||
       !tourTitle ||
-      !totalPrice ||
-      !userId
+      !totalPrice
     ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
     }
 
     const newBooking = new bookingModel({
@@ -38,29 +42,30 @@ export const createBooking = async (req, res) => {
       name,
       email,
       phone,
-      travelers: parseInt(travelers, 10),
-      specialRequests,
+      travelers,
       tourId,
       tourTitle,
-      totalPrice: parseFloat(totalPrice),
-      travelDate: travelDate ? new Date(travelDate) : null,
-      status: "pending",
-      paymentStatus: "pending",
+      totalPrice,
+      travelDate,
+      specialRequests,
+      status: "confirmed",
+      paymentStatus: "paid",
     });
 
-    const savedBooking = await newBooking.save();
+    await newBooking.save();
 
     res.status(201).json({
       success: true,
-      booking: savedBooking,
-      message: "Booking created successfully",
+      booking: newBooking,
     });
   } catch (error) {
-    console.error("Error creating booking:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("CREATE BOOKING ERROR:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
-
 /*
  * Get and show all bookings of logged in user
  */
@@ -248,4 +253,7 @@ export const addReview = async (req, res) => {
     console.error("Error adding review:", error);
     res.status(500).json({ success: false, message: error.message });
   }
+};
+export {
+  createBooking
 };

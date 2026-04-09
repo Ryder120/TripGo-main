@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import ServiceList from "./ServiceList";
 
+
 const Services = () => {
   return (
     <motion.div
@@ -32,5 +33,6 @@ const Services = () => {
     </motion.div>
   );
 };
+//console.log(process.env.MONGO_URI);
 
 export default Services;

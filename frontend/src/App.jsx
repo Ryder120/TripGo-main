@@ -20,14 +20,16 @@ import About from "./pages/About";
 import ScrollToTop from "./components/ScrollToTop";
 import MyBooking from "./pages/MyBooking";
 
+
 const App = () => {
   return (
-    <div className="flex flex-col min-h-screen px-4 sm:px-8 md:px-10 lg:px-22">
+    <div className="flex flex-col min-h-screen px-4 sm:px-8 md:px-10 lg:px-22 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:bg-slate-900 dark:text-white">
       <ToastContainer theme="dark" position="bottom-right" autoClose={1000} />
       <Navbar />
       <ScrollToTop />
       <main className="flex-1">
         <Routes>
+          
           <Route path="/" element={<Home />} />
           <Route path="/tours" element={<Tour />} />
           <Route path="/about" element={<About />} />

@@ -70,15 +70,13 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  // compute container classes to avoid complex inline template literal
+  const containerClasses = `w-full fixed top-0 left-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 dark:bg-slate-900 dark:border-slate-700' : 'bg-white/90 backdrop-blur-sm dark:bg-transparent'}`;
+
   return (
     <>
       {/* Navbar */}
-      <div
-        className={`w-full fixed top-0 left-0 z-50 transition-all duration-300 ${scrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
-            : "bg-white/90 backdrop-blur-sm"
-          }`}
-      >
+      <div className={containerClasses}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo */}
@@ -87,7 +85,7 @@ const Navbar = () => {
               className="flex-shrink-0 transition-transform hover:scale-105 duration-200"
             >
               <div className="flex items-center">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-2">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center mr-2 bg-white dark:bg-slate-800">
                   <img src={logo} alt="Logo" />
                 </div>
                 <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-sky-600 to-blue-600 bg-clip-text text-transparent">
@@ -103,8 +101,8 @@ const Navbar = () => {
                   key={link.to}
                   to={link.to}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isActive(link.to)
-                    ? "bg-blue-50 text-blue-600 shadow-sm"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                    ? "bg-blue-50 text-blue-600 shadow-sm dark:bg-slate-800 dark:text-blue-300"
+                    : "text-gray-700 hover:text-blue-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:text-blue-300 dark:hover:bg-slate-700"
                     }`}
                 >
                   {link.label}
@@ -129,19 +127,19 @@ const Navbar = () => {
                 <div className="flex items-center space-x-3">
                   <Link
                     to="/profile"
-                    className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                    className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200"
                   >
                     Profile
                   </Link>
                   {/* User Profile */}
                   <div className="relative group">
-                    <div className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="flex items-center space-x-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors cursor-pointer">
                       <img
                         src={assets.user}
                         alt="Profile"
                         className="w-8 h-8 rounded-full ring-2 ring-blue-100"
                       />
-                      <span className="text-sm font-medium text-gray-700 hidden lg:block">
+                      <span className="text-sm font-medium text-gray-700 hidden lg:block dark:text-gray-200">
                         {user.name}
                       </span>
                     </div>
@@ -183,7 +181,7 @@ const Navbar = () => {
               )}
               <button
                 onClick={toggleMenu}
-                className="menu-button p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                className="menu-button p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-slate-700 transition-colors"
                 aria-label="Toggle menu"
               >
                 {menuOpen ? (
@@ -201,7 +199,7 @@ const Navbar = () => {
       {
         menuOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm">
-            <div className="fixed top-16 sm:top-20 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container">
+            <div className="fixed top-16 sm:top-20 left-0 right-0 bg-white shadow-xl border-t border-gray-100 mobile-menu-container dark:bg-slate-800 dark:border-slate-700">
               <div className="px-4 py-6 space-y-4">
                 {/* Mobile Navigation Links */}
                 <div className="space-y-2">
@@ -212,7 +210,7 @@ const Navbar = () => {
                       onClick={() => setMenuOpen(false)}
                       className={`block px-4 py-3 rounded-lg text-base font-medium transition-colors ${isActive(link.to)
                         ? "bg-blue-50 text-blue-600"
-                        : "text-gray-700 hover:bg-gray-50"
+                        : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-slate-700"
                         }`}
                     >
                       {link.label}
@@ -221,12 +219,12 @@ const Navbar = () => {
                 </div>
 
                 {/* Mobile User Section */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-4 border-t border-gray-200 dark:border-slate-700">
                   {user ? (
                     <div className="space-y-3">
                       <div className="flex items-center px-4 py-2">
-                        <User className="w-5 h-5 text-gray-400 mr-3" />
-                        <span className="text-sm text-gray-600">
+                        <User className="w-5 h-5 text-gray-400 mr-3 dark:text-gray-300" />
+                        <span className="text-sm text-gray-600 dark:text-gray-300">
                           Signed in as <strong>{user.name}</strong>
                         </span>
                       </div>
