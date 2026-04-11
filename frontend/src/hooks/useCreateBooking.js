@@ -44,6 +44,29 @@ const useBooking = (tour, navigate) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validation: name (letters and spaces only), email (gmail only), phone (10 digits)
+    const nameValid = /^[A-Za-z\s]+$/.test(formData.name.trim());
+    if (!nameValid) {
+      toast.error("Name must contain only letters and spaces.");
+      return;
+    }
+
+    const gmailValid = /^[A-Za-z0-9._%+-]+@gmail\.com$/i.test(formData.email.trim());
+    if (!gmailValid) {
+      toast.error("Please use a valid Gmail address (example@gmail.com).");
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    const phoneValid = /^\d{10}$/.test(phoneDigits);
+    if (!phoneValid) {
+      toast.error("Phone number must be exactly 10 digits.");
+      return;
+    }
+
+    // Get current user to attach userId and email
+    const currentUser = JSON.parse(localStorage.getItem("user") || "null");
+
     const bookingData = {
       _id: Date.now().toString(),
       ...formData,
@@ -52,6 +75,8 @@ const useBooking = (tour, navigate) => {
       status: "pending",
       paymentStatus: "pending",
       createdAt: new Date().toISOString(),
+      userId: currentUser?._id || null,
+      userEmail: currentUser?.email || formData.email,
     };
 
     // 👉 NOT saving yet

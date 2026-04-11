@@ -22,6 +22,23 @@ const LoginPage = () => {
         return;
       }
 
+      // Additional registration validation
+      if (!isLogin) {
+        // Name: only letters and spaces
+        const nameValid = /^[A-Za-z\s]+$/.test(name.trim());
+        if (!nameValid) {
+          toast.error("Name must contain only letters and spaces.");
+          return;
+        }
+
+        // Email: only gmail addresses
+        const gmailValid = /^[A-Za-z0-9._%+-]+@gmail\.com$/i.test(email.trim());
+        if (!gmailValid) {
+          toast.error("Please use a valid Gmail address (example@gmail.com).");
+          return;
+        }
+      }
+
       let response;
 
       // Determine whether it's login or register
