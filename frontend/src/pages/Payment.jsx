@@ -40,7 +40,7 @@ const Payment = () => {
         }
 
         // ✅ SEND CORRECT DATA TO BACKEND
-        await axios.post("http://localhost:8000/api/bookings", {
+        await axios.post(`${backendUrl}/api/bookings`, {
   userId: "67f123abc456def789000000",
 
   name: "Rajeev",
